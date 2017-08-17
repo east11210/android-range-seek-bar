@@ -1,22 +1,28 @@
 buildscript {
     repositories {
+        jcenter()
         mavenCentral()
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:2.1.0'
+        classpath 'com.android.tools.build:gradle:2.3.3'
+        classpath 'com.jfrog.bintray.gradle:gradle-bintray-plugin:1.7.3'
+        classpath 'com.github.dcendents:android-maven-gradle-plugin:1.5'
     }
 }
 
 apply plugin: 'com.android.library'
+//apply plugin: 'maven-publish'
+apply plugin: 'com.github.dcendents.android-maven'
+apply plugin: 'com.jfrog.bintray'
 
 android {
-    compileSdkVersion 23
-    buildToolsVersion "23.0.3"
+    compileSdkVersion COMPILE_SDK_VERSION as int
+    buildToolsVersion BUILD_TOOLS_VERSION
 
     defaultConfig {
         minSdkVersion 15
-        targetSdkVersion 23
+        targetSdkVersion TARGET_SDK_VERSION as int
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
@@ -36,12 +42,102 @@ dependencies {
     }
 
     compile fileTree(dir: 'libs', include: ['*.jar'])
-    compile 'com.android.support:appcompat-v7:23.4.0'
-    compile 'com.android.support:support-annotations:23.4.0'
+    compile 'com.android.support:appcompat-v7:' + SUPPORT_LIBRARY_VERSION
+    compile 'com.android.support:support-annotations:' + SUPPORT_LIBRARY_VERSION
 
     // Robolectric
     testCompile 'org.robolectric:robolectric:3.1-rc1'
     testCompile "org.mockito:mockito-core:2.0.53-beta"
 }
 
-apply from: 'https://raw.github.com/chrisbanes/gradle-mvn-push/master/gradle-mvn-push.gradle'
+def siteUrl = "https://github.com/east11210/android-range-seek-bar"
+def gitUrl = "https://github.com/east11210/android-range-seek-bar.git"
+group = "com.godimage.3pp"
+archivesBaseName = "android-range-seek-bar"
+version = "1.0"
+
+
+install {
+    repositories.mavenInstaller {
+        // This generates POM.xml with proper parameters
+        pom {
+            project {
+                packaging 'aar'
+                // Add your description here
+                name 'A SeekBar similar to the default Android one, but with two thumb controls allowing a range to be selected, and some other extras as well.'  //项目描述
+                url siteUrl
+                // Set your license
+                licenses {
+                    license {
+                        name 'The Apache Software License, Version 2.0'
+                        url 'http://www.apache.org/licenses/LICENSE-2.0.txt'
+                    }
+                }
+                developers {
+                    developer {
+                        id 'east11210'       //填写开发者基本信息
+                        name 'Stanley Li'
+                        email 'east11210@gmail.com'
+                    }
+                }
+                scm {
+                    connection gitUrl
+                    developerConnection gitUrl
+                    url siteUrl
+                }
+            }
+        }
+    }
+}
+
+task sourcesJar(type: Jar) {
+    from android.sourceSets.main.java.srcDirs
+    classifier = 'sources'
+}
+task javadoc(type: Javadoc) {
+    source = android.sourceSets.main.java.srcDirs
+    classpath += project.files(android.getBootClasspath().join(File.pathSeparator))
+}
+//task javadocJar(type: Jar, dependsOn: javadoc) {
+//    classifier = 'javadoc'
+//    from javadoc.destinationDir
+//}
+artifacts {
+//    archives javadocJar
+    archives sourcesJar
+}
+Properties properties = new Properties()
+properties.load(project.rootProject.file('local.properties').newDataInputStream())
+bintray {
+    user = properties.getProperty("bintray.user")
+    key = properties.getProperty("bintray.apikey")
+    configurations = ['archives']
+    pkg {
+        repo = "maven"  //发布到Bintray的那个仓库里，默认账户有四个库，我们这里上传到maven库
+        name = "AndroidRangeSeekBar"  //发布到Bintray上的项目名字
+        websiteUrl = siteUrl
+        vcsUrl = gitUrl
+        licenses = ["Apache-2.0"]
+        publish = true
+    }
+}
+
+//publishing {
+//    publications {
+//        library(MavenPublication) {
+//            groupId 'com.godimage.3pp'
+//            artifactId 'range-seek-bar'
+//            version '0.1'
+//            artifact(sourceJar)
+//            artifact("$buildDir/outputs/aar/rangeseekbar-release.aar")
+//            pom {
+//
+//            }
+//        }
+//    }
+//    repositories {
+//        maven {
+//            url MAVEN_REPO
+//        }
+//    }
+//}
